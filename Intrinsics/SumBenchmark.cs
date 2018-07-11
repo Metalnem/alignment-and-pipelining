@@ -8,10 +8,24 @@ namespace Intrinsics
 		private const int Length = 32 * 1024;
 		private int[] data;
 
+		[Params(true, false)]
+		public bool Aligned { get; set; }
+
 		[GlobalSetup]
-		public void GlobalSetup()
+		public unsafe void GlobalSetup()
 		{
-			data = Enumerable.Range(0, Length).ToArray();
+			for (; ; )
+			{
+				data = Enumerable.Range(0, Length).ToArray();
+
+				fixed (int* ptr = data)
+				{
+					if ((Aligned && (uint)ptr % 32 == 0) || (!Aligned && (uint)ptr % 16 != 0))
+					{
+						break;
+					}
+				}
+			}
 		}
 
 		[Benchmark(Baseline = true)]
