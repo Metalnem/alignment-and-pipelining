@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 
 namespace Intrinsics
@@ -10,28 +11,29 @@ namespace Intrinsics
 			const int VectorSizeInInts = 8;
 
 			var pos = 0;
-			var max = Avx.SetAllVector256(Int32.MinValue);
+			var sum = Avx.SetZeroVector256<int>();
 
 			fixed (int* ptr = &source[0])
 			{
 				for (; pos <= source.Length - VectorSizeInInts; pos += VectorSizeInInts)
 				{
 					var current = Avx.LoadVector256(ptr + pos);
-					max = Avx2.Add(current, max);
+					sum = Avx2.Add(current, sum);
 				}
 			}
 
 			var temp = stackalloc int[VectorSizeInInts];
-			Avx.Store(temp, max);
+			Avx.Store(temp, sum);
 
-			var sum = 0;
-			SumSlow(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref sum);
-			SumSlow(source.AsSpan(pos), ref sum);
+			var final = 0;
+			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
+			Sum(source.AsSpan(pos), ref final);
 
-			return sum;
+			return final;
 		}
 
-		private static void SumSlow(ReadOnlySpan<int> source, ref int sum)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Sum(ReadOnlySpan<int> source, ref int sum)
 		{
 			for (int i = 0; i < source.Length; ++i)
 			{

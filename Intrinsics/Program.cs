@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using BenchmarkDotNet.Running;
 
 namespace Intrinsics
 {
@@ -7,7 +6,7 @@ namespace Intrinsics
 	{
 		public static void Main(string[] args)
 		{
-			Console.WriteLine(FastMath.Sum(Enumerable.Range(0, 1000).ToArray()));
+			BenchmarkRunner.Run<SumBenchmark>();
 		}
 	}
 }
