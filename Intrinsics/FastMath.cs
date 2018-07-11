@@ -4,9 +4,9 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Intrinsics
 {
-	public static class FastMath
+	public static unsafe class FastMath
 	{
-		public static unsafe int Sum(int[] source)
+		public static int Sum(int[] source)
 		{
 			const int VectorSizeInInts = 8;
 
@@ -39,6 +39,12 @@ namespace Intrinsics
 			{
 				sum += source[i];
 			}
+		}
+
+		private static int* Align(int* ptr, int alignment)
+		{
+			ulong mask = (ulong)alignment - 1;
+			return (int*)(((ulong)ptr + mask) & ~mask);
 		}
 	}
 }
