@@ -30,5 +30,8 @@ namespace Intrinsics
 
 		[Benchmark(Baseline = true)]
 		public int Sum() => FastMath.Sum(data);
+
+		[Benchmark]
+		public int SumAligned() => FastMath.SumAligned(data);
 	}
 }
