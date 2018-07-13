@@ -33,5 +33,8 @@ namespace Intrinsics
 
 		[Benchmark]
 		public int SumAligned() => FastMath.SumAligned(data);
+
+		[Benchmark]
+		public int SumPipelined() => FastMath.SumPipelined(data);
 	}
 }

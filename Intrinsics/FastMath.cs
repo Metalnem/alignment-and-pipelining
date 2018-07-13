@@ -74,6 +74,46 @@ namespace Intrinsics
 			return final;
 		}
 
+		public static int SumPipelined(int[] source)
+		{
+			const int VectorSizeInInts = 8;
+			const int BlockSizeInInts = 4 * VectorSizeInInts;
+
+			int pos = 0;
+			Vector256<int> sum = Avx.SetZeroVector256<int>();
+
+			fixed (int* ptr = &source[0])
+			{
+				for (; pos <= source.Length - BlockSizeInInts; pos += BlockSizeInInts)
+				{
+					var block0 = Avx.LoadVector256(ptr + pos + 0 * VectorSizeInInts);
+					var block1 = Avx.LoadVector256(ptr + pos + 1 * VectorSizeInInts);
+					var block2 = Avx.LoadVector256(ptr + pos + 2 * VectorSizeInInts);
+					var block3 = Avx.LoadVector256(ptr + pos + 3 * VectorSizeInInts);
+
+					sum = Avx2.Add(block0, sum);
+					sum = Avx2.Add(block1, sum);
+					sum = Avx2.Add(block2, sum);
+					sum = Avx2.Add(block3, sum);
+				}
+
+				for (; pos <= source.Length - VectorSizeInInts; pos += VectorSizeInInts)
+				{
+					var current = Avx.LoadVector256(ptr + pos);
+					sum = Avx2.Add(current, sum);
+				}
+			}
+
+			var temp = stackalloc int[VectorSizeInInts];
+			Avx.Store(temp, sum);
+
+			var final = 0;
+			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
+			Sum(source.AsSpan(pos), ref final);
+
+			return final;
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void Sum(ReadOnlySpan<int> source, ref int sum)
 		{
