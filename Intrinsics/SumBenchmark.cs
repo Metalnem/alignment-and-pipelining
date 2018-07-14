@@ -1,8 +1,10 @@
 using System.Linq;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Attributes.Exporters;
 
 namespace Intrinsics
 {
+	[MarkdownExporter]
 	public class SumBenchmark
 	{
 		private const int Length = 32 * 1024;
