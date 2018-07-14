@@ -13,73 +13,59 @@ namespace Intrinsics
 
 		public static int Sum(int[] source)
 		{
-			int pos = 0;
-			Vector256<int> sum = Avx.SetZeroVector256<int>();
-
 			fixed (int* ptr = &source[0])
 			{
+				var pos = 0;
+				var sum = Avx.SetZeroVector256<int>();
+
 				for (; pos <= source.Length - VectorSizeInInts; pos += VectorSizeInInts)
 				{
 					var current = Avx.LoadVector256(ptr + pos);
 					sum = Avx2.Add(current, sum);
 				}
+
+				var temp = stackalloc int[VectorSizeInInts];
+				Avx.Store(temp, sum);
+
+				var final = Sum(temp, VectorSizeInInts);
+				final += Sum(ptr + pos, source.Length - pos);
+
+				return final;
 			}
-
-			var temp = stackalloc int[VectorSizeInInts];
-			Avx.Store(temp, sum);
-
-			var final = 0;
-			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
-			Sum(source.AsSpan(pos), ref final);
-
-			return final;
 		}
 
 		public static int SumAligned(int[] source)
 		{
-			int pos = 0;
-			Vector256<int> sum;
-
 			fixed (int* ptr = &source[0])
 			{
-				int* aligned = (int*)(((ulong)ptr + AlignmentMask) & ~AlignmentMask);
-				pos = (int)(aligned - ptr);
-
-				sum = Avx2.And(Avx.LoadVector256(ptr), Avx.SetVector256(
-					pos > 7 ? -1 : 0,
-					pos > 6 ? -1 : 0,
-					pos > 5 ? -1 : 0,
-					pos > 4 ? -1 : 0,
-					pos > 3 ? -1 : 0,
-					pos > 2 ? -1 : 0,
-					pos > 1 ? -1 : 0,
-					pos > 0 ? -1 : 0
-				));
+				var aligned = (int*)(((ulong)ptr + AlignmentMask) & ~AlignmentMask);
+				var pos = (int)(aligned - ptr);
+				var sum = Avx.SetZeroVector256<int>();
+				var final = Sum(ptr, pos);
 
 				for (; pos <= source.Length - VectorSizeInInts; pos += VectorSizeInInts)
 				{
 					var current = Avx.LoadAlignedVector256(ptr + pos);
 					sum = Avx2.Add(current, sum);
 				}
+
+				var temp = stackalloc int[VectorSizeInInts];
+				Avx.Store(temp, sum);
+
+				final += Sum(temp, VectorSizeInInts);
+				final += Sum(ptr + pos, source.Length - pos);
+
+				return final;
 			}
-
-			var temp = stackalloc int[VectorSizeInInts];
-			Avx.Store(temp, sum);
-
-			var final = 0;
-			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
-			Sum(source.AsSpan(pos), ref final);
-
-			return final;
 		}
 
 		public static int SumPipelined(int[] source)
 		{
-			int pos = 0;
-			Vector256<int> sum = Avx.SetZeroVector256<int>();
-
 			fixed (int* ptr = &source[0])
 			{
+				var pos = 0;
+				var sum = Avx.SetZeroVector256<int>();
+
 				for (; pos <= source.Length - BlockSizeInInts; pos += BlockSizeInInts)
 				{
 					var block0 = Avx.LoadVector256(ptr + pos + 0 * VectorSizeInInts);
@@ -98,38 +84,25 @@ namespace Intrinsics
 					var current = Avx.LoadVector256(ptr + pos);
 					sum = Avx2.Add(current, sum);
 				}
+
+				var temp = stackalloc int[VectorSizeInInts];
+				Avx.Store(temp, sum);
+
+				var final = Sum(temp, VectorSizeInInts);
+				final += Sum(ptr + pos, source.Length - pos);
+
+				return final;
 			}
-
-			var temp = stackalloc int[VectorSizeInInts];
-			Avx.Store(temp, sum);
-
-			var final = 0;
-			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
-			Sum(source.AsSpan(pos), ref final);
-
-			return final;
 		}
 
 		public static int SumAlignedPipelined(int[] source)
 		{
-			int pos = 0;
-			Vector256<int> sum;
-
 			fixed (int* ptr = &source[0])
 			{
-				int* aligned = (int*)(((ulong)ptr + AlignmentMask) & ~AlignmentMask);
-				pos = (int)(aligned - ptr);
-
-				sum = Avx2.And(Avx.LoadVector256(ptr), Avx.SetVector256(
-					pos > 7 ? -1 : 0,
-					pos > 6 ? -1 : 0,
-					pos > 5 ? -1 : 0,
-					pos > 4 ? -1 : 0,
-					pos > 3 ? -1 : 0,
-					pos > 2 ? -1 : 0,
-					pos > 1 ? -1 : 0,
-					pos > 0 ? -1 : 0
-				));
+				var aligned = (int*)(((ulong)ptr + AlignmentMask) & ~AlignmentMask);
+				var pos = (int)(aligned - ptr);
+				var sum = Avx.SetZeroVector256<int>();
+				var final = Sum(ptr, pos);
 
 				for (; pos <= source.Length - BlockSizeInInts; pos += BlockSizeInInts)
 				{
@@ -149,25 +122,28 @@ namespace Intrinsics
 					var current = Avx.LoadAlignedVector256(ptr + pos);
 					sum = Avx2.Add(current, sum);
 				}
+
+				var temp = stackalloc int[VectorSizeInInts];
+				Avx.Store(temp, sum);
+
+				final += Sum(temp, VectorSizeInInts);
+				final += Sum(ptr + pos, source.Length - pos);
+
+				return final;
 			}
-
-			var temp = stackalloc int[VectorSizeInInts];
-			Avx.Store(temp, sum);
-
-			var final = 0;
-			Sum(new ReadOnlySpan<int>(temp, VectorSizeInInts), ref final);
-			Sum(source.AsSpan(pos), ref final);
-
-			return final;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Sum(ReadOnlySpan<int> source, ref int sum)
+		private static int Sum(int* source, int length)
 		{
-			for (int i = 0; i < source.Length; ++i)
+			int sum = 0;
+
+			for (int i = 0; i < length; ++i)
 			{
 				sum += source[i];
 			}
+
+			return sum;
 		}
 	}
 }

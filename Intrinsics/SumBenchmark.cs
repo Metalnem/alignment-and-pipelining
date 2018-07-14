@@ -8,8 +8,8 @@ namespace Intrinsics
 		private const int Length = 32 * 1024;
 		private int[] data;
 
-		[Params(true, false)]
-		public bool Aligned { get; set; }
+		[Params(8, 32)]
+		public int Alignment { get; set; }
 
 		[GlobalSetup]
 		public unsafe void GlobalSetup()
@@ -20,7 +20,7 @@ namespace Intrinsics
 
 				fixed (int* ptr = data)
 				{
-					if ((Aligned && (uint)ptr % 32 == 0) || (!Aligned && (uint)ptr % 16 != 0))
+					if ((Alignment == 32 && (uint)ptr % 32 == 0) || (Alignment == 8 && (uint)ptr % 16 != 0))
 					{
 						break;
 					}
