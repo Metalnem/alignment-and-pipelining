@@ -106,10 +106,10 @@ namespace Intrinsics
 
 				for (; pos <= source.Length - BlockSizeInInts; pos += BlockSizeInInts)
 				{
-					var block0 = Avx.LoadVector256(ptr + pos + 0 * VectorSizeInInts);
-					var block1 = Avx.LoadVector256(ptr + pos + 1 * VectorSizeInInts);
-					var block2 = Avx.LoadVector256(ptr + pos + 2 * VectorSizeInInts);
-					var block3 = Avx.LoadVector256(ptr + pos + 3 * VectorSizeInInts);
+					var block0 = Avx.LoadAlignedVector256(ptr + pos + 0 * VectorSizeInInts);
+					var block1 = Avx.LoadAlignedVector256(ptr + pos + 1 * VectorSizeInInts);
+					var block2 = Avx.LoadAlignedVector256(ptr + pos + 2 * VectorSizeInInts);
+					var block3 = Avx.LoadAlignedVector256(ptr + pos + 3 * VectorSizeInInts);
 
 					sum = Avx2.Add(block0, sum);
 					sum = Avx2.Add(block1, sum);
