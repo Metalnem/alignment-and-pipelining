@@ -7,9 +7,9 @@ namespace Intrinsics
 {
 	public static unsafe class FastMath
 	{
-		const ulong AlignmentMask = 31UL;
-		const int VectorSizeInInts = 8;
-		const int BlockSizeInInts = 32;
+		private const ulong AlignmentMask = 31UL;
+		private const int VectorSizeInInts = 8;
+		private const int BlockSizeInInts = 32;
 
 		public static int Sum(int[] source)
 		{
